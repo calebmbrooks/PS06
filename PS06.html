@@ -254,7 +254,7 @@ test_set &lt;- data_frame(x=x0)</code></pre>
   )
   # Recall: We don't observe f(x) and epsilon, just (x, y)
   sample &lt;- sample %&gt;% 
-    select(x, y)
+    select(x, y, epsilon)
   
   return(sample)
 }</code></pre>
@@ -268,6 +268,47 @@ n_sample &lt;- 10000</code></pre>
 </div>
 <div id="computation" class="section level1">
 <h1>Computation</h1>
+<pre class="r"><code>new_data &lt;- generate_sample(f, n_sample, sigma)
+error &lt;- new_data$y-(new_data$x)^2
+
+spline1 &lt;- smooth.spline(x = new_data$x, y = new_data$y, df = 2)
+spline2 &lt;- smooth.spline(x = new_data$x, y = new_data$y, df = 99)
+
+predict1 &lt;- predict(spline1, new_data$x)
+predict2 &lt;- predict(spline2, new_data$x)
+
+new_data$predict1 &lt;- predict1$y
+new_data$predict2 &lt;- predict2$y
+
+new_data$predict1error &lt;- new_data$predict1 %&gt;% 
+  `-`((new_data$x)^2)
+new_data$predict2error &lt;- new_data$predict2 %&gt;% 
+  `-`((new_data$x)^2)
+
+mse1 &lt;- new_data$predict1error^2 %&gt;% 
+  sum %&gt;%
+  `/`(length(error)) %&gt;% 
+  round(5)
+mse2 &lt;- new_data$predict2error^2 %&gt;% 
+  sum %&gt;%
+  `/`(length(error)) %&gt;% 
+  round(5)
+
+var1 &lt;- new_data$predict1 %&gt;% 
+  `-`(mean(new_data$predict1)) %&gt;% 
+  `^`(2) %&gt;% 
+  sum %&gt;%
+  `/`(length(new_data$predict1)-1) %&gt;% 
+  round(5)
+var2 &lt;- new_data$predict2 %&gt;% 
+  `-`(mean(new_data$predict2)) %&gt;% 
+  `^`(2) %&gt;% 
+  sum %&gt;%
+  `/`(length(new_data$predict2)-1) %&gt;% 
+  round(5)
+
+bias_sq1 &lt;- (mse1*length(error))-var1-sigma
+bias_sq2 &lt;- (mse2*length(error))-var2-sigma</code></pre>
 </div>
 <div id="tables" class="section level1">
 <h1>Tables</h1>
@@ -280,6 +321,7 @@ n_sample &lt;- 10000</code></pre>
 <table>
 <thead>
 <tr class="header">
+<th align="right">DF</th>
 <th align="right">MSE</th>
 <th align="right">bias_squared</th>
 <th align="right">var</th>
@@ -289,11 +331,20 @@ n_sample &lt;- 10000</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">X</td>
-<td align="right">X</td>
-<td align="right">X</td>
-<td align="right">X</td>
-<td align="right">X</td>
+<td align="right">2</td>
+<td align="right">0.00483</td>
+<td align="right">47.91346</td>
+<td align="right">0.08654</td>
+<td align="right">0.3</td>
+<td align="right">48.3</td>
+</tr>
+<tr class="even">
+<td align="right">99</td>
+<td align="right">6.210^{-4}</td>
+<td align="right">5.8072</td>
+<td align="right">0.0928</td>
+<td align="right">0.3</td>
+<td align="right">6.2</td>
 </tr>
 </tbody>
 </table>
@@ -309,10 +360,10 @@ n_sample &lt;- 10000</code></pre>
 <li>Which of the two models would you choose for predicting the point of interest and why?</li>
 </ol>
 <p><strong>Answers</strong>:</p>
+<p>1.The change in bias and variance as DF increases shows what we would intuitively expect - that bias decreases and variance increases.</p>
 <ol style="list-style-type: decimal">
-<li></li>
-<li></li>
-<li></li>
+<li><p>I think this is actually what I did - will change for resubmission if need be.</p></li>
+<li><p>As it has substantially less error overall, I would choose the model with df = 99</p></li>
 </ol>
 </div>
 

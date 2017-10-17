@@ -75,7 +75,7 @@ generate_sample <- function(f, n, sigma) {
   )
   # Recall: We don't observe f(x) and epsilon, just (x, y)
   sample <- sample %>% 
-    select(x, y)
+    select(x, y, epsilon)
   
   return(sample)
 }
@@ -96,7 +96,47 @@ n_sample <- 10000
 # Computation
 
 ```{r}
+new_data <- generate_sample(f, n_sample, sigma)
+error <- new_data$y-(new_data$x)^2
 
+spline1 <- smooth.spline(x = new_data$x, y = new_data$y, df = 2)
+spline2 <- smooth.spline(x = new_data$x, y = new_data$y, df = 99)
+
+predict1 <- predict(spline1, new_data$x)
+predict2 <- predict(spline2, new_data$x)
+
+new_data$predict1 <- predict1$y
+new_data$predict2 <- predict2$y
+
+new_data$predict1error <- new_data$predict1 %>% 
+  `-`((new_data$x)^2)
+new_data$predict2error <- new_data$predict2 %>% 
+  `-`((new_data$x)^2)
+
+mse1 <- new_data$predict1error^2 %>% 
+  sum %>%
+  `/`(length(error)) %>% 
+  round(5)
+mse2 <- new_data$predict2error^2 %>% 
+  sum %>%
+  `/`(length(error)) %>% 
+  round(5)
+
+var1 <- new_data$predict1 %>% 
+  `-`(mean(new_data$predict1)) %>% 
+  `^`(2) %>% 
+  sum %>%
+  `/`(length(new_data$predict1)-1) %>% 
+  round(5)
+var2 <- new_data$predict2 %>% 
+  `-`(mean(new_data$predict2)) %>% 
+  `^`(2) %>% 
+  sum %>%
+  `/`(length(new_data$predict2)-1) %>% 
+  round(5)
+
+bias_sq1 <- (mse1*length(error))-var1-sigma
+bias_sq2 <- (mse2*length(error))-var2-sigma
 ```
 
 
@@ -109,9 +149,10 @@ As done in Lec 2.7, for both
 
 output tables comparing:
 
-|  MSE| bias_squared|   var| irreducible|   sum|
-|----:|------------:|-----:|-----------:|-----:|
-|     X|           X  |     X |      X |         X |
+|    DF|         MSE|   bias_squared|        var| irreducible|   sum|
+|-----:|-----------:|--------------:|----------:|-----------:|------------------------:|
+|     2| `r I(mse1)`|`r I(bias_sq1)`|`r I(var1)`|`r I(sigma)`|`r I(mse1*length(error))`|
+|    99| `r I(mse2)`|`r I(bias_sq2)`|`r I(var2)`|`r I(sigma)`|`r I(mse2*length(error))`|
 
 where `sum = bias_squared + var + irreducible`. You can created cleanly formatted tables like the one above by piping a data frame into `knitr::kable(digits=4)`.
 
@@ -129,8 +170,12 @@ $x$ in this example, and not just for $$\mbox{MSE}\left[\widehat{f}(x_0)\right]
 = \mbox{MSE}\left[\widehat{f}(0.95)\right]$$.
 1. Which of the two models would you choose for predicting the point of interest and why?
 
+
+
 **Answers**:
 
-1.
-1.
-1.
+1.The change in bias and variance as DF increases shows what we would intuitively expect - that bias decreases and variance increases.
+
+1. I think this is actually what I did - will change for resubmission if need be.
+
+1. As it has substantially less error overall, I would choose the model with df = 99
