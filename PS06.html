@@ -268,47 +268,44 @@ n_sample &lt;- 10000</code></pre>
 </div>
 <div id="computation" class="section level1">
 <h1>Computation</h1>
-<pre class="r"><code>new_data &lt;- generate_sample(f, n_sample, sigma)
-error &lt;- new_data$y-(new_data$x)^2
+<pre class="r"><code>set.seed(619)
+df2 &lt;- numeric(10000)
+df99 &lt;- numeric(10000)
 
-spline1 &lt;- smooth.spline(x = new_data$x, y = new_data$y, df = 2)
-spline2 &lt;- smooth.spline(x = new_data$x, y = new_data$y, df = 99)
+for (i in 1:n_sample){
+  new_data &lt;- generate_sample(f, n, sigma)
+  error &lt;- new_data$y-(new_data$x)^2
+  
+  s1 &lt;- smooth.spline(new_data$x, new_data$y, df = 2)
+  s2 &lt;- smooth.spline(new_data$x, new_data$y, df = 99)  
 
-predict1 &lt;- predict(spline1, new_data$x)
-predict2 &lt;- predict(spline2, new_data$x)
+  df2[i] = predict(s1, .95)$y
+  df99[i] = predict(s2, .95)$y
+}
 
-new_data$predict1 &lt;- predict1$y
-new_data$predict2 &lt;- predict2$y
+df2_sqe &lt;- (df2-(.95^2))^2
+df99_sqe &lt;- (df99-(.95^2))^2
 
-new_data$predict1error &lt;- new_data$predict1 %&gt;% 
-  `-`((new_data$x)^2)
-new_data$predict2error &lt;- new_data$predict2 %&gt;% 
-  `-`((new_data$x)^2)
+mse1 &lt;- mean(df2_sqe) 
+mse2 &lt;- mean(df99_sqe)
 
-mse1 &lt;- new_data$predict1error^2 %&gt;% 
-  sum %&gt;%
-  `/`(length(error)) %&gt;% 
-  round(5)
-mse2 &lt;- new_data$predict2error^2 %&gt;% 
-  sum %&gt;%
-  `/`(length(error)) %&gt;% 
-  round(5)
-
-var1 &lt;- new_data$predict1 %&gt;% 
-  `-`(mean(new_data$predict1)) %&gt;% 
+var1 &lt;- df2 %&gt;%
+  `-`(mean(df2)) %&gt;% 
   `^`(2) %&gt;% 
-  sum %&gt;%
-  `/`(length(new_data$predict1)-1) %&gt;% 
-  round(5)
-var2 &lt;- new_data$predict2 %&gt;% 
-  `-`(mean(new_data$predict2)) %&gt;% 
+  sum() %&gt;% 
+  `/`(length(df2)-1)
+  
+var2 &lt;- df99 %&gt;%
+  `-`(mean(df99)) %&gt;% 
   `^`(2) %&gt;% 
-  sum %&gt;%
-  `/`(length(new_data$predict2)-1) %&gt;% 
-  round(5)
+  sum() %&gt;% 
+  `/`(length(df99)-1)
 
-bias_sq1 &lt;- (mse1*length(error))-var1-sigma
-bias_sq2 &lt;- (mse2*length(error))-var2-sigma</code></pre>
+bias_sq1 &lt;- (mean(df2)-.95^2)^2
+bias_sq2 &lt;- (mean(df99)-.95^2)^2
+  
+sum1 &lt;- bias_sq1+var1
+sum2 &lt;- bias_sq2+var2</code></pre>
 </div>
 <div id="tables" class="section level1">
 <h1>Tables</h1>
@@ -332,19 +329,19 @@ bias_sq2 &lt;- (mse2*length(error))-var2-sigma</code></pre>
 <tbody>
 <tr class="odd">
 <td align="right">2</td>
-<td align="right">0.00483</td>
-<td align="right">47.91346</td>
-<td align="right">0.08654</td>
+<td align="right">0.0144639</td>
+<td align="right">0.0137775</td>
+<td align="right">6.865204510^{-4}</td>
 <td align="right">0.3</td>
-<td align="right">48.3</td>
+<td align="right">0.014464</td>
 </tr>
 <tr class="even">
 <td align="right">99</td>
-<td align="right">6.210^{-4}</td>
-<td align="right">5.8072</td>
-<td align="right">0.0928</td>
+<td align="right">0.0177132</td>
+<td align="right">1.321707610^{-6}</td>
+<td align="right">0.0177136</td>
 <td align="right">0.3</td>
-<td align="right">6.2</td>
+<td align="right">0.0177149</td>
 </tr>
 </tbody>
 </table>
@@ -362,8 +359,8 @@ bias_sq2 &lt;- (mse2*length(error))-var2-sigma</code></pre>
 <p><strong>Answers</strong>:</p>
 <p>1.The change in bias and variance as DF increases shows what we would intuitively expect - that bias decreases and variance increases.</p>
 <ol style="list-style-type: decimal">
-<li><p>I think this is actually what I did - will change for resubmission if need be.</p></li>
-<li><p>As it has substantially less error overall, I would choose the model with df = 99</p></li>
+<li><p>a similar procedure, but with random selection of x values from the relevant domain</p></li>
+<li><p>As it has substantially less error overall, I would choose the model with df = 99 for the purpose of predicting a single point.</p></li>
 </ol>
 </div>
 
